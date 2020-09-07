@@ -32,6 +32,8 @@ ROM : 980GB
 
 POWER SUPPLY : 550W
 
+MOTHER BOARD : ASUS ROG STRIX Z270F GAMING
+
 # Contributors
 
 - [mii8080](https://github.com/morioka22)
