@@ -24,19 +24,23 @@ class HomeController {
 
         val sessionData = Data().getSession(request.remoteAddr)
 
-	model.addAttribute("sessionData", sessionData)
+        model.addAttribute("sessionData", sessionData)
 
-	if (sessionData?.id != "") {
-		return "home"
-	} else {
-		return "login"
-	}
-
-        return "home"
+        println("sessionID : ${sessionData?.id}")
+        return if (sessionData?.id != "") {
+            "home"
+        } else {
+            "redirect:/login"
+        }
     }
 
+    @GetMapping("/login")
+    fun login(model: Model, request: HttpServletRequest): String {
+        return "login"
+    }
 
-
-
-
+    @GetMapping("/register")
+    fun register(model: Model, request: HttpServletRequest): String {
+        return "register"
+    }
 }
