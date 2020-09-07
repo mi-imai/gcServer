@@ -23,6 +23,35 @@
         .pages {
             padding-top: 70px;
         }
+
+        .fileObject {
+            padding: 1%;
+        }
+
+        .fileName {
+            font-size: 300%;
+        }
+
+        .fa, .fas {
+            font-weight: 900;
+            font-size: 50;
+            padding: 1%;
+        }
+
+        .fileList {
+            padding: 5%;
+        }
+
+        #dragdroparea {
+            border:2px dotted #0B85A1;
+            width:500px;
+            height: 100px;
+            color:#92AAB0;
+            text-align:left;vertical-align:middle;
+            padding:10px 10px 10px 10px;
+            margin-bottom:10px;
+            font-size:200%;
+        }
     </style>
 </head>
 <body>
@@ -81,10 +110,88 @@
         <!-- Collapsible content -->
 
     </nav>
-    <!--/.Navbar-->
-    <div class="pages">
 
-	    <h1 th:text="${sessionData.ip}">[[sessionData.ip]]</h1>
+    <!--/.Navbar-->
+    <div class="uploadForm">
+        <h1>ドラッグ＆ドロップでファイルアップロード</h1>
+        <div id="dragdroparea">ここにドロップしてください。</div>
+        <br/><br/>
+        <div id="status1"></div>
+        <script>
+            $(function() {
+                function sendFileToServer(formData,status){
+                    var uploadURL ="/upload"; //Upload URL
+                    $.ajax({
+                        url: uploadURL,
+                        type: "POST",
+                        contentType:false,
+                        processData: false,
+                        cache: false,
+                        data: formData,
+                        timeout: 30000,
+                        beforeSend: function(xhr, settings) {
+                            //送信前の処理
+                            //$("#status1").clear()
+                            $("#status1").append("Uploading..<br>");
+                        },
+                        complete: function(xhr, textStatus) {
+                            //通信完了
+                        },
+                        success: function(result, textStatus, xhr) {
+                            //ajax通信が成功した
+                            //$("#status1").append("File upload Done<br>");
+                            //$("#status1").clear()
+                            $("#status1").append("Uploaded!<br>");
+                        },
+                        error: function(xhr, textStatus, error) {
+                            //ajax通信が失敗した
+                            $('#status1').append('送信に失敗しました<br>');
+                        }
+                    });
+                }
+                function handleFileUpload(files,obj){
+                    var fd = new FormData();
+                    for (var i = 0; i < files.length; i++){
+                        fd.append('files', files[i]);
+                    }
+                    sendFileToServer(fd,status);
+                }
+                $(document).ready(function(){
+                    var obj = $("#dragdroparea");
+                    obj.on('dragenter', function (e) {
+                        e.stopPropagation();
+                        e.preventDefault();
+                    });
+                    obj.on('dragover', function (e) {
+                        e.stopPropagation();
+                        e.preventDefault();
+                    });
+                    obj.on('drop', function (e) {
+                        e.preventDefault();
+                        var files = e.originalEvent.dataTransfer.files;
+                        handleFileUpload(files);
+                    });
+                    $(document).on('dragenter', function (e){
+                        e.stopPropagation();
+                        e.preventDefault();
+                    });
+                    $(document).on('dragover', function (e){
+                        e.stopPropagation();
+                        e.preventDefault();
+                    });
+                    $(document).on('drop', function (e){
+                        e.stopPropagation();
+                        e.preventDefault();
+                    });
+                });
+            });
+        </script>
+    </div>
+    <div class="pages fileList">
+
+
+	    <h1>Files</h1>
+        <p th:utext="${files}"></p>
     </div>
 
 </body>

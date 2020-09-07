@@ -25,27 +25,20 @@ class UserController {
 
     @Autowired
     var jdbc: JdbcTemplate? = null
-
-
+    
     @RequestMapping("/login", method = [RequestMethod.POST])
     fun loginPost(@RequestBody loginData: MultiValueMap<String, String>, request: HttpServletRequest, response: HttpServletResponse) {
-        val list = jdbc?.queryForList("SELECT * FROM users")
         val encryptedPassword = Digest().getSHA256(loginData["password"]?.get(0)!!)
         val email = loginData["email"]?.get(0)
-
+        val user = jdbc?.queryForList("SELECT * FROM users WHERE email = ? and encrypted_password = ? LIMIT 1;", email, encryptedPassword)
         loginData.clear()
 
-        list?.forEach {
-            if (it["email"] == email && it["encrypted_password"] == encryptedPassword) {
-                val sessionData = Data().getSession(request.remoteAddr)
-                sessionData?.id = it["id"] as String
-                loginData.clear()
-                response.sendRedirect("/")
-                return
-            }
-        }
+        if (user?.count() == 0) { response.sendRedirect("/login"); return }
 
-        response.sendRedirect("/login")
+        val sessionData = Data().getSession(request.remoteAddr)
+        sessionData?.id = user?.get(0)?.get("id") as String
+
+        response.sendRedirect("/")
     }
 
     @RequestMapping("/register", method = [RequestMethod.POST])

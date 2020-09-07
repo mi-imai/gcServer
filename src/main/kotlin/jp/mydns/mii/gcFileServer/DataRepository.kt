@@ -8,10 +8,7 @@ class DataRepository {
 
 
     companion object {
-        // シングルトンインスタンスの宣言
         private var instance: DataRepository? = null
-
-        // インスタンス取得
         fun getInstance() = instance ?: synchronized(this) {
             instance ?: DataRepository().also { instance = it }
         }
