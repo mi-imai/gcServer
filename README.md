@@ -21,10 +21,15 @@ MySQL
 
 # Server Spec
 CPU : Intel i7 7700K
+
 GPU1: NVIDIA GTX 1050ti
+
 GPU2: NVIDIA GTX 1050ti
+
 RAM : DDR4 8GB 2666Hz
+
 ROM : 980GB
+
 POWER SUPPLY : 550W
 
 # Contributors
