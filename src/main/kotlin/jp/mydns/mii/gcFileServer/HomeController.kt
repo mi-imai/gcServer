@@ -11,11 +11,14 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.multipart.MultipartFile
 import java.io.File
 import java.io.IOException
+import java.math.BigInteger
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
+import java.util.*
 import javax.servlet.http.HttpServletRequest
+import kotlin.math.roundToInt
 
 
 @Controller
@@ -28,6 +31,10 @@ class HomeController {
 
     @GetMapping("")
     fun index(model: Model, request: HttpServletRequest): String {
+
+
+
+
         val list = jdbcTemplate?.queryForList("SELECT * FROM users")
 
         println(list)
@@ -36,19 +43,52 @@ class HomeController {
 
         model.addAttribute("sessionData", sessionData)
 
+
         val stringBuilder = StringBuilder()
-        val path = "D:\\FileServer\\test"
+        val path = System.getProperty("user.dir") + "\\files\\${sessionData?.id}"
+        val folder = File(path)
+        if (!folder.exists()) {
+            folder.mkdirs()
+        }
+
+        val fileList = jdbcTemplate?.queryForList("SELECT * FROM files WHERE user_name = ?;", sessionData?.id)!!
+        var fileSize: BigInteger = BigInteger.ZERO
+
+        stringBuilder.append("<ul class=\"list-group\">")
+        fileList.forEach {
+            val file = File(it["path"] as String)
+            if (file.exists()) {
+                if (file.isFile) {
+                    stringBuilder.append("<li class=\"list-group-item\"><div class=\"fileObject file\"><i class=\"fileIcon fas fa-file\"></i><span class=\"fileName\">${file.name.replace("<", "\\<").replace(">", "\\>")}</span></div></li>")
+                } else {
+                    stringBuilder.append("<li class=\"list-group-item\"><div class=\"fileObject directory\"><i class=\"fileIcon fas fa-folder\"></i><span class=\"fileName\">${file.name.replace("<", "\\<").replace(">", "\\>")}</span></div></li>")
+                }
+                fileSize += it["file_size"] as BigInteger
+            }
+        }
+
+        stringBuilder.append("</ul>")
+
+
+
+
+        model.addAttribute("filesSize", "${calcFileSize(fileSize.toLong())}/10GB, $fileSize")
+
+        /*
         val fileList = File(path).listFiles()
 
         stringBuilder.append("<ul class=\"list-group\">")
         fileList?.forEach {
             if (it.isFile) {
-                stringBuilder.append("<li class=\"list-group-item\"><div class=\"fileObject file\"><i class=\"fas fa-file\"></i><span class=\"fileName\">${it.name.replace("<", "\\<").replace(">", "\\>")}</span></div></li>")
+                stringBuilder.append("<li class=\"list-group-item\"><div class=\"fileObject file\"><i class=\"fileIcon fas fa-file\"></i><span class=\"fileName\">${it.name.replace("<", "\\<").replace(">", "\\>")}</span></div></li>")
             } else {
-                stringBuilder.append("<li class=\"list-group-item\"><div class=\"fileObject directory\"><i class=\"fas fa-folder\"></i><span class=\"fileName\">${it.name.replace("<", "\\<").replace(">", "\\>")}</span></div></li>")
+                stringBuilder.append("<li class=\"list-group-item\"><div class=\"fileObject directory\"><i class=\"fileIcon fas fa-folder\"></i><span class=\"fileName\">${it.name.replace("<", "\\<").replace(">", "\\>")}</span></div></li>")
             }
         }
         stringBuilder.append("</ul>")
+        */
+
+
 
         model.addAttribute("files", stringBuilder.toString())
 
@@ -71,28 +111,37 @@ class HomeController {
         return "register"
     }
 
-    @RequestMapping("/upload", method = [RequestMethod.POST])
-    fun index(@RequestParam("files") files: List<MultipartFile>, model: Model?, request: HttpServletRequest): String? {
-        val sessionData = Data().getSession(request.remoteAddr)
-        if (sessionData?.id == "") { return "home" }
 
-        for (file in files) {
-            println("getOriginalFilename=" + file.originalFilename)
-            savefile(file)
-        }
-        return "home"
-    }
 
-    private fun savefile(file: MultipartFile) {
-        val filename: String? = file.originalFilename
-        val uploadfile: Path = Paths.get("D:\\FileServer\\test\\$filename")
-        try {
-            Files.newOutputStream(uploadfile, StandardOpenOption.CREATE).use { os ->
-                val bytes = file.bytes
-                os.write(bytes)
+
+    fun calcFileSize(size: Long): String {
+
+        val b = 1024
+        val mb = 1048576
+        val gb = 1073741824
+        var target = 0
+        var unit = ""
+
+        when {
+            size >= gb -> {
+                target = gb
+                unit = "GB"
             }
-        } catch (e: IOException) {
 
+            size >= mb -> {
+                target = mb
+                unit = "MB"
+            }
+
+            else -> {
+                target = b
+                unit = "KB"
+            }
         }
+
+        val newSize = size / target
+
+
+        return "$newSize$unit"
     }
 }

@@ -32,7 +32,7 @@
             font-size: 300%;
         }
 
-        .fa, .fas {
+        .fileIcon {
             font-weight: 900;
             font-size: 50;
             padding: 1%;
@@ -44,8 +44,8 @@
 
         #dragdroparea {
             border:2px dotted #0B85A1;
-            width:500px;
-            height: 100px;
+            width:100%;
+            height: 20%;
             color:#92AAB0;
             text-align:left;vertical-align:middle;
             padding:10px 10px 10px 10px;
@@ -93,9 +93,17 @@
                     <a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink" data-toggle="dropdown"
                        aria-haspopup="true" aria-expanded="false">Other</a>
                     <div class="dropdown-menu dropdown-primary" aria-labelledby="navbarDropdownMenuLink">
-                        <a class="dropdown-item" href="#">OpenServer</a>
+                        <a class="dropdown-item" href="#">OpenServer (Coming soon.)</a>
                     </div>
                 </li>
+
+                <form class="navbar-nav mr-auto">
+                    <div class="nav-item active">
+                        <a class="nav-link">
+                            <i class="fas fa-user"></i>
+                        </a>
+                    </div>
+                </form>
 
             </ul>
             <!-- Links -->
@@ -120,7 +128,7 @@
         <script>
             $(function() {
                 function sendFileToServer(formData,status){
-                    var uploadURL ="/upload"; //Upload URL
+                    var uploadURL ="/file/upload"; //Upload URL
                     $.ajax({
                         url: uploadURL,
                         type: "POST",
@@ -142,6 +150,7 @@
                             //$("#status1").append("File upload Done<br>");
                             //$("#status1").clear()
                             $("#status1").append("Uploaded!<br>");
+                            location.reload()
                         },
                         error: function(xhr, textStatus, error) {
                             //ajax通信が失敗した
@@ -190,7 +199,7 @@
     <div class="pages fileList">
 
 
-	    <h1>Files</h1>
+	    <h1>Files [[${filesSize}]]</h1>
         <p th:utext="${files}"></p>
     </div>
 
