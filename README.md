@@ -16,7 +16,9 @@ On Linux, BSD, or Mac OS X
 
 # Using
 Kotlin 1.3
+
 Spring boot 2.3.3
+
 MySQL
 
 # Server Spec
