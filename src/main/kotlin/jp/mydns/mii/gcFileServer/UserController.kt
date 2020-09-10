@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestMethod
 import org.springframework.web.bind.annotation.RestController
-import java.security.MessageDigest
 import java.util.*
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -45,6 +44,11 @@ class UserController {
     fun registerPost(@RequestBody registerData: MultiValueMap<String, String>, request: HttpServletRequest, response: HttpServletResponse) {
         val email = registerData["email"]?.get(0)
         val name = registerData["name"]?.get(0)
+        val registerPassword = registerData["register_password"]?.get(0)
+        if (registerPassword != "65536") {
+            response.sendRedirect("/register")
+            return
+        }
         val encryptedPassword = Digest().getSHA256(registerData["password"]?.get(0)!!)
 
         registerData.clear()
