@@ -2,6 +2,8 @@ package jp.mydns.mii.gcFileServer
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.mail.MailSender
+import org.springframework.mail.SimpleMailMessage
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
@@ -18,6 +20,7 @@ import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
 import java.util.*
 import javax.servlet.http.HttpServletRequest
+import javax.servlet.http.HttpServletResponse
 import kotlin.math.roundToInt
 
 
@@ -26,14 +29,21 @@ class HomeController {
 
     @Autowired
     var jdbcTemplate: JdbcTemplate? = null
+    @Autowired
+    var mailSender: MailSender? = null
+
 
     val repository = DataRepository.getInstance()
 
     @GetMapping("")
     fun index(model: Model, request: HttpServletRequest): String {
+        val msg = SimpleMailMessage()
+        msg.setFrom("mi.imai8080@gmail.com")
+        msg.setTo("kurochian2@gmail.com")
+        msg.setSubject("Test mail.")
+        msg.setText("Spring Boot Email Testing.")
 
-
-
+        mailSender?.send(msg)
 
         val list = jdbcTemplate?.queryForList("SELECT * FROM users")
 
@@ -45,7 +55,7 @@ class HomeController {
 
 
         val stringBuilder = StringBuilder()
-        val path = System.getProperty("user.dir") + "\\files\\${sessionData?.id}"
+        val path = "/home/mii/server/files/${sessionData?.id}/"
         val folder = File(path)
         if (!folder.exists()) {
             folder.mkdirs()
@@ -118,6 +128,12 @@ class HomeController {
     @GetMapping("/register")
     fun register(model: Model, request: HttpServletRequest): String {
         return "register"
+    }
+
+    @GetMapping("/registerCheck/{id}")
+    fun checkRegister(model: Model, request: HttpServletRequest, response: HttpServletResponse): String {
+
+        return "login"
     }
 
 

@@ -56,7 +56,7 @@ class UserController {
         if (jdbc?.queryForList("SELECT * FROM users WHERE email = ? LIMIT 1;", email)?.count() != 0) { response.sendRedirect("/register"); return }
         if (jdbc?.queryForList("SELECT * FROM users WHERE name = ? LIMIT 1;", name)?.count() != 0) { response.sendRedirect("/register"); return }
 
-        val emailPattern = Regex(pattern = "^[\\w!#%&'/=~`\\*\\+\\?\\{\\}\\^\\\$\\-\\|]+(\\.[\\w!#%&'/=~`\\*\\+\\?\\{\\}\\^\\\$\\-\\|]+)*@[\\w!#%&'/=~`\\*\\+\\?\\{\\}\\^\\\$\\-\\|]+(\\.[\\w!#%&'/=~`\\*\\+\\?\\{\\}\\^\\\$\\-\\|]+)*\$")
+        val emailPattern = Regex(pattern = "^[a-zA-Z0-9.!#\$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\\.[a-zA-Z0-9-]+)*\$")
         if (!emailPattern.containsMatchIn(email!!)) { response.sendRedirect("/register"); return }
 
         val uuid = UUID.randomUUID().toString()

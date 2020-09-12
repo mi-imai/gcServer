@@ -37,7 +37,7 @@ class FileController {
     fun uploadFile(@RequestParam("files") files: List<MultipartFile>, model: Model?, request: HttpServletRequest): String? {
         val sessionData = Data().getSession(request.remoteAddr)
         if (sessionData?.id == "") { return "home" }
-        val basePath = System.getProperty("user.dir") + "\\files\\${sessionData?.id}\\"
+        val basePath = "/home/mii/server/files/${sessionData?.id}/"
 
         val dataBaseFiles = jdbcTemplate?.queryForList("SELECT * FROM files WHERE user_name = ?", sessionData?.id)
         var size: Long = 0
