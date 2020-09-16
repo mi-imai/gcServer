@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonCreator
 import jp.mydns.mii.gcFileServer.encrypt.Digest
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.mail.MailSender
+import org.springframework.mail.SimpleMailMessage
 import org.springframework.util.MultiValueMap
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -24,6 +26,9 @@ class UserController {
 
     @Autowired
     var jdbc: JdbcTemplate? = null
+
+    @Autowired
+    var mailSender: MailSender? = null
     
     @RequestMapping("/login", method = [RequestMethod.POST])
     fun loginPost(@RequestBody loginData: MultiValueMap<String, String>, request: HttpServletRequest, response: HttpServletResponse) {
@@ -61,13 +66,24 @@ class UserController {
 
         val uuid = UUID.randomUUID().toString()
 
-        jdbc?.update("INSERT INTO users VALUES (?, ?, ?, ?, NOW(), NOW());", uuid, name, email, encryptedPassword)
+        jdbc?.update("INSERT INTO registerCheck VALUES (?, ?, NOW(), ?, ?)", email, uuid, encryptedPassword, name)
+        val msg = SimpleMailMessage()
+        msg.setFrom("mi.imai8080@gmail.com")
+        msg.setTo(email)
+        msg.setSubject("アカウント登録の確認")
+        msg.setText("gcServerのアカウント登録を完了するには、下記のリンクを開いてください。心当たりのない場合はこのメールを無視してください。\nhttps://mii.mydns.jp/registerCheck/${uuid}")
 
-        println("PASS: $encryptedPassword\nEMAIL: $email\nUUID: $uuid")
+        mailSender?.send(msg)
+
+
+
+        /*
+        jdbc?.update("INSERT INTO users VALUES (?, ?, ?, ?, NOW(), NOW());", uuid, name, email, encryptedPassword)
 
         val sessionData = Data().getSession(request.remoteAddr)
         sessionData?.id = uuid
 
         response.sendRedirect("/")
+         */
     }
 }

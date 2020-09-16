@@ -37,13 +37,7 @@ class HomeController {
 
     @GetMapping("")
     fun index(model: Model, request: HttpServletRequest): String {
-        val msg = SimpleMailMessage()
-        msg.setFrom("mi.imai8080@gmail.com")
-        msg.setTo("kurochian2@gmail.com")
-        msg.setSubject("Test mail.")
-        msg.setText("Spring Boot Email Testing.")
 
-        mailSender?.send(msg)
 
         val list = jdbcTemplate?.queryForList("SELECT * FROM users")
 
@@ -93,22 +87,6 @@ class HomeController {
 
         model.addAttribute("filesSize", "Files ${calcFileSize(fileSize.toLong())}/10GB<br/>Using ${((fileSize.toDouble() / 10737418240.0) * 1000).roundToInt().toDouble() / 10}%")
 
-        /*
-        val fileList = File(path).listFiles()
-
-        stringBuilder.append("<ul class=\"list-group\">")
-        fileList?.forEach {
-            if (it.isFile) {
-                stringBuilder.append("<li class=\"list-group-item\"><div class=\"fileObject file\"><i class=\"fileIcon fas fa-file\"></i><span class=\"fileName\">${it.name.replace("<", "\\<").replace(">", "\\>")}</span></div></li>")
-            } else {
-                stringBuilder.append("<li class=\"list-group-item\"><div class=\"fileObject directory\"><i class=\"fileIcon fas fa-folder\"></i><span class=\"fileName\">${it.name.replace("<", "\\<").replace(">", "\\>")}</span></div></li>")
-            }
-        }
-        stringBuilder.append("</ul>")
-        */
-
-
-
         model.addAttribute("files", stringBuilder.toString())
 
         println("sessionID : ${sessionData?.id}")
@@ -120,21 +98,7 @@ class HomeController {
         }
     }
 
-    @GetMapping("/login")
-    fun login(model: Model, request: HttpServletRequest): String {
-        return "login"
-    }
 
-    @GetMapping("/register")
-    fun register(model: Model, request: HttpServletRequest): String {
-        return "register"
-    }
-
-    @GetMapping("/registerCheck/{id}")
-    fun checkRegister(model: Model, request: HttpServletRequest, response: HttpServletResponse): String {
-
-        return "login"
-    }
 
 
 
