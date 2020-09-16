@@ -1,13 +1,7 @@
 package jp.mydns.mii.gcFileServer
 
-import org.apache.tomcat.util.file.ConfigurationSource
+import org.apache.tomcat.util.http.fileupload.IOUtils
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.core.io.ByteArrayResource
-import org.springframework.core.io.InputStreamResource
-import org.springframework.core.io.Resource
-import org.springframework.http.HttpHeaders
-import org.springframework.http.MediaType
-import org.springframework.http.ResponseEntity
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
@@ -17,11 +11,10 @@ import org.springframework.web.bind.annotation.RequestMethod
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.multipart.MultipartFile
 import java.io.File
+import java.io.FileInputStream
 import java.io.IOException
 import java.nio.file.Files
-import java.nio.file.Path
 import java.nio.file.Paths
-import java.nio.file.StandardOpenOption
 import java.util.*
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -58,9 +51,36 @@ class FileController {
         }
         return "home"
     }
+    @RequestMapping("/download/{id}", method = [RequestMethod.GET])
+    fun downloadFile(@PathVariable("id") id: String, request: HttpServletRequest, response: HttpServletResponse) {
+        val sessionData = Data().getSession(request.remoteAddr)
+        if (sessionData?.id != "") {
+            val files = jdbcTemplate?.queryForList("SELECT * FROM files WHERE id = ? LIMIT 1;", id)
+            if (files?.size != 0) {
+                if (files?.get(0)?.get("user_name") == sessionData?.id) {
+                    val path = files?.get(0)?.get("path") as String
+                    try {
+                        FileInputStream(path).use {
+                            response.outputStream.use { os ->
+
+                                response.contentType = "application/octet-stream"
+                                response.setHeader("Content-Disposition", "attachment; filename=${files[0]["name"]}")
+                                response.setContentLength(it.channel.size().toInt())
+                                os.write(it.readBytes())
+                                os.flush()
+                            }
+                        }
+                    } catch (e: IOException) {
+                        e.printStackTrace()
+                    }
+
+                }
+            }
+        }
+    }
 
 
-
+    /*
     @RequestMapping("/download/{id}", method = [RequestMethod.GET])
     fun downloadFile(@PathVariable("id") id: String, request: HttpServletRequest): ResponseEntity<Resource> {
         val sessionData = Data().getSession(request.remoteAddr)
@@ -78,6 +98,7 @@ class FileController {
 
 
                     val resource = ByteArrayResource(Files.readAllBytes(Paths.get(path)))
+
 
                     var contentType: String? = null
                     try {
@@ -99,6 +120,8 @@ class FileController {
         }
         return ResponseEntity.ok().build()
     }
+
+     */
 
     @RequestMapping("/delete/{id}", method = [RequestMethod.GET])
     fun deleteFile(@PathVariable("id") id: String, request: HttpServletRequest, response: HttpServletResponse) {
@@ -128,12 +151,15 @@ class FileController {
         val uploadFile = basePath + uuid
 
         try {
+            Files.copy(file.inputStream, Paths.get(basePath).resolve(uuid))
+            /*
             Files.newOutputStream(Paths.get(uploadFile), StandardOpenOption.CREATE).use { os ->
                 val bytes = file.bytes
 
                 os.write(bytes)
             }
-            jdbcTemplate?.update("INSERT INTO files VALUES (?, ?, ?, ?, NOW(), ?);", sessionData.id, file.originalFilename?.replace("<","")?.replace(">", ""), uuid, uploadFile, file.size)
+             */
+            jdbcTemplate?.update("INSERT INTO files VALUES (?, ?, ?, ?, NOW(), ?);", sessionData.id, file.originalFilename?.replace("<", "")?.replace(">", ""), uuid, uploadFile, file.size)
 
         } catch (e: IOException) {
 
