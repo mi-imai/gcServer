@@ -2,15 +2,20 @@ package jp.mydns.mii.gcFileServer
 
 class Data {
     private val repository = DataRepository.getInstance()
-    fun getSession(ip: String): SessionData? {
+    fun getSession(ip: String, id: String): SessionData? {
         var sessionData: SessionData? = null
-        if (repository.sessions.containsKey(ip)) {
-            sessionData = DataRepository.getInstance().sessions[ip]
+        if (repository.sessions.containsKey(id)) {
+            sessionData = DataRepository.getInstance().sessions[id]
         } else {
-            sessionData = SessionData(ip, "")
-            DataRepository.getInstance().sessions[ip] = sessionData
+            sessionData = SessionData(ip, "", id)
+            DataRepository.getInstance().sessions[id] = sessionData
         }
 
-        return sessionData
+        return if (sessionData?.ip == ip) {
+            sessionData
+        } else {
+            null
+        }
     }
 }
+//a

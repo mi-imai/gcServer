@@ -38,18 +38,22 @@ class HomeController {
     @GetMapping("")
     fun index(model: Model, request: HttpServletRequest): String {
 
+        if (request.getSession(true) == null) {
+            return "redirect:/login"
+        }
 
         val list = jdbcTemplate?.queryForList("SELECT * FROM users")
 
         println(list)
 
-        val sessionData = Data().getSession(request.remoteAddr)
+        val sessionData = Data().getSession(request.remoteAddr, request.cookies.first { it.name == "JSESSIONID" }.value)
+                ?: return "redirect:/login"
 
         model.addAttribute("sessionData", sessionData)
 
 
         val stringBuilder = StringBuilder()
-        val path = "/home/mii/server/files/${sessionData?.id}/"
+        val path = "/home/mii/server/files/${sessionData.id}/"
         val folder = File(path)
         if (!folder.exists()) {
             folder.mkdirs()

@@ -28,7 +28,7 @@ class FileController {
 
     @RequestMapping("/upload", method = [RequestMethod.POST])
     fun uploadFile(@RequestParam("files") files: List<MultipartFile>, model: Model?, request: HttpServletRequest): String? {
-        val sessionData = Data().getSession(request.remoteAddr)
+        val sessionData = Data().getSession(request.remoteAddr, request.cookies.first { it.name == "JSESSIONID" }.value)
         if (sessionData?.id == "") { return "home" }
         val basePath = "/home/mii/server/files/${sessionData?.id}/"
 
@@ -53,7 +53,7 @@ class FileController {
     }
     @RequestMapping("/download/{id}", method = [RequestMethod.GET])
     fun downloadFile(@PathVariable("id") id: String, request: HttpServletRequest, response: HttpServletResponse) {
-        val sessionData = Data().getSession(request.remoteAddr)
+        val sessionData = Data().getSession(request.remoteAddr, request.cookies.first { it.name == "JSESSIONID" }.value)
         if (sessionData?.id != "") {
             val files = jdbcTemplate?.queryForList("SELECT * FROM files WHERE id = ? LIMIT 1;", id)
             if (files?.size != 0) {
@@ -125,7 +125,7 @@ class FileController {
 
     @RequestMapping("/delete/{id}", method = [RequestMethod.GET])
     fun deleteFile(@PathVariable("id") id: String, request: HttpServletRequest, response: HttpServletResponse) {
-        val sessionData = Data().getSession(request.remoteAddr)
+        val sessionData = Data().getSession(request.remoteAddr, request.cookies.first { it.name == "JSESSIONID" }.value)
         if (sessionData?.id == "") { response.sendRedirect("/login"); return }
 
         val file = jdbcTemplate?.queryForList("SELECT * FROM files WHERE id = ? LIMIT 1;", id)?.get(0)!!

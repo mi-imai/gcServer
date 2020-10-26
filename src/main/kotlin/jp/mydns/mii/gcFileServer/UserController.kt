@@ -39,7 +39,7 @@ class UserController {
 
         if (user?.count() == 0) { response.sendRedirect("/login"); return }
 
-        val sessionData = Data().getSession(request.remoteAddr)
+        val sessionData = Data().getSession(request.remoteAddr, request.cookies.first { it.name == "JSESSIONID" }.value)
         sessionData?.id = user?.get(0)?.get("id") as String
 
         response.sendRedirect("/")
@@ -65,7 +65,7 @@ class UserController {
         if (!emailPattern.containsMatchIn(email!!)) { response.sendRedirect("/register"); return }
 
         val uuid = UUID.randomUUID().toString()
-
+        /*
         jdbc?.update("INSERT INTO registerCheck VALUES (?, ?, NOW(), ?, ?)", email, uuid, encryptedPassword, name)
         val msg = SimpleMailMessage()
         msg.setFrom("mi.imai8080@gmail.com")
@@ -74,16 +74,16 @@ class UserController {
         msg.setText("gcServerのアカウント登録を完了するには、下記のリンクを開いてください。心当たりのない場合はこのメールを無視してください。\nhttps://mii.mydns.jp/registerCheck/${uuid}")
 
         mailSender?.send(msg)
+        */
 
 
 
-        /*
         jdbc?.update("INSERT INTO users VALUES (?, ?, ?, ?, NOW(), NOW());", uuid, name, email, encryptedPassword)
 
-        val sessionData = Data().getSession(request.remoteAddr)
+        val sessionData = Data().getSession(request.remoteAddr, request.cookies.first { it.name == "JSESSIONID" }.value)
         sessionData?.id = uuid
 
         response.sendRedirect("/")
-         */
+
     }
 }
