@@ -46,6 +46,10 @@ class HomeController {
 
         println(list)
 
+        if (request.cookies == null) {
+            return "redirect:/login"
+        }
+
         val sessionData = Data().getSession(request.remoteAddr, request.cookies.first { it.name == "JSESSIONID" }.value)
                 ?: return "redirect:/login"
 
@@ -58,38 +62,6 @@ class HomeController {
         if (!folder.exists()) {
             folder.mkdirs()
         }
-
-        val fileList = jdbcTemplate?.queryForList("SELECT * FROM files WHERE user_name = ?;", sessionData?.id)!!
-        var fileSize: BigInteger = BigInteger.ZERO
-
-        stringBuilder.append("<ul class=\"list-group\">")
-        fileList.forEach {
-            println(it["path"] as String)
-            val file = File(it["path"] as String)
-            if (file.exists()) {
-                //if (file.isFile) {
-                    stringBuilder.append("<li class=\"list-group-item\">" +
-                                             "<div class=\"fileObject file\">" +
-                                                 "<i class=\"fileIcon fas fa-file\"></i><span class=\"fileName\">${(it["name"] as String).replace("<", "\\<").replace(">", "\\>")}</span>" +
-                                             "</div>" +
-                                             "<button type=\"button\" class=\"btn btn-raised btn-info\" onclick=\"location.href='/file/download/${it["id"] as String}'\"><i class=\"fas fa-download\"></i></button>" +
-                                             "<button type=\"button\" class=\"btn btn-raised btn-danger\" onclick=\"location.href='/file/delete/${it["id"] as String}'\"><i class=\"fas fa-trash-alt\"></i></button>" +
-                                         "</li>")
-                //} else {
-                //    stringBuilder.append("<li class=\"list-group-item\"><div class=\"fileObject directory\"><i class=\"fileIcon fas fa-folder\"></i><span class=\"fileName\">${(it["name"] as String).replace("<", "\\<").replace(">", "\\>")}</span></div></li>")
-                //}
-                fileSize += it["file_size"] as BigInteger
-            } else {
-                jdbcTemplate?.update("DELETE FROM files WHERE id = ?", it["id"] as String)
-            }
-        }
-
-        stringBuilder.append("</ul>")
-
-
-
-
-        model.addAttribute("filesSize", "Files ${calcFileSize(fileSize.toLong())}/10GB<br/>Using ${((fileSize.toDouble() / 10737418240.0) * 1000).roundToInt().toDouble() / 10}%")
 
         model.addAttribute("files", stringBuilder.toString())
 

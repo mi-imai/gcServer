@@ -5,14 +5,12 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestMethod
-import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
+import java.math.BigInteger
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.*
@@ -25,6 +23,60 @@ class FileController {
 
     @Autowired
     var jdbcTemplate: JdbcTemplate? = null
+
+    @RequestMapping("/list", method = [RequestMethod.GET])
+    @ResponseBody
+    fun getFileList(model: Model?, request: HttpServletRequest): String? {
+        if (request.getSession(true) == null) {
+            return "redirect:/login"
+        }
+
+        val list = jdbcTemplate?.queryForList("SELECT * FROM users")
+
+        println(list)
+
+        if (request.cookies == null) {
+            return "redirect:/login"
+        }
+
+        val sessionData = Data().getSession(request.remoteAddr, request.cookies.first { it.name == "JSESSIONID" }.value)
+                ?: return "redirect:/login"
+
+        model?.addAttribute("sessionData", sessionData)
+
+
+        val stringBuilder = StringBuilder()
+        val path = "/home/mii/server/files/${sessionData.id}/"
+        val folder = File(path)
+        if (!folder.exists()) {
+            folder.mkdirs()
+        }
+
+        val fileList = jdbcTemplate?.queryForList("SELECT * FROM files WHERE user_name = ?;", sessionData?.id)!!
+        var fileSize: BigInteger = BigInteger.ZERO
+
+        stringBuilder.append("<ul class=\"list-group\">")
+        fileList.forEach {
+            println(it["path"] as String)
+            val file = File(it["path"] as String)
+            if (file.exists()) {
+                stringBuilder.append("<li class=\"list-group-item\">" +
+                        "<div class=\"fileObject file\">" +
+                        "<i class=\"fileIcon fas fa-file\"></i><span class=\"fileName\">${(it["name"] as String).replace("<", "\\<").replace(">", "\\>")}</span>" +
+                        "</div>" +
+                        "<button type=\"button\" class=\"btn btn-raised btn-info\" onclick=\"location.href='/file/download/${it["id"] as String}'\"><i class=\"fas fa-download\"></i></button>" +
+                        "<button type=\"button\" class=\"btn btn-raised btn-danger\" onclick=\"deleteFile('${it["id"] as String}')\"><i class=\"fas fa-trash-alt\"></i></button>" +
+                        "</li>")
+                fileSize += it["file_size"] as BigInteger
+            } else {
+                jdbcTemplate?.update("DELETE FROM files WHERE id = ?", it["id"] as String)
+            }
+        }
+
+        stringBuilder.append("</ul>")
+
+        return stringBuilder.toString()
+    }
 
     @RequestMapping("/upload", method = [RequestMethod.POST])
     fun uploadFile(@RequestParam("files") files: List<MultipartFile>, model: Model?, request: HttpServletRequest): String? {
@@ -51,32 +103,37 @@ class FileController {
         }
         return "home"
     }
+
     @RequestMapping("/download/{id}", method = [RequestMethod.GET])
     fun downloadFile(@PathVariable("id") id: String, request: HttpServletRequest, response: HttpServletResponse) {
         val sessionData = Data().getSession(request.remoteAddr, request.cookies.first { it.name == "JSESSIONID" }.value)
-        if (sessionData?.id != "") {
-            val files = jdbcTemplate?.queryForList("SELECT * FROM files WHERE id = ? LIMIT 1;", id)
-            if (files?.size != 0) {
-                if (files?.get(0)?.get("user_name") == sessionData?.id) {
-                    val path = files?.get(0)?.get("path") as String
-                    try {
-                        FileInputStream(path).use {
-                            response.outputStream.use { os ->
+        if (sessionData?.id == "") { return }
 
-                                response.contentType = "application/octet-stream"
-                                response.setHeader("Content-Disposition", "attachment; filename=${files[0]["name"]}")
-                                response.setContentLength(it.channel.size().toInt())
-                                os.write(it.readBytes())
-                                os.flush()
-                            }
-                        }
-                    } catch (e: IOException) {
-                        e.printStackTrace()
-                    }
+        val files = jdbcTemplate?.queryForList("SELECT * FROM files WHERE id = ? LIMIT 1;", id)
 
-                }
-            }
+        if (files?.size == 0) {
+            return
         }
+
+        if (files?.get(0)?.get("user_name") == sessionData?.id) {
+            val path = files?.get(0)?.get("path") as String
+            try {
+                FileInputStream(path).use {
+                    response.outputStream.use { os ->
+
+                        response.contentType = "application/octet-stream"
+                        response.setHeader("Content-Disposition", "attachment; filename=${files[0]["name"]}")
+                        response.setContentLength(it.channel.size().toInt())
+                        os.write(it.readBytes())
+                        os.flush()
+                    }
+                }
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+
+        }
+
     }
 
 
