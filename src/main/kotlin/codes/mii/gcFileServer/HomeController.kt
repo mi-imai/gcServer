@@ -1,4 +1,4 @@
-package jp.mydns.mii.gcFileServer
+package codes.mii.gcFileServer
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.jdbc.core.JdbcTemplate
@@ -43,9 +43,6 @@ class HomeController {
         }
 
         val list = jdbcTemplate?.queryForList("SELECT * FROM users")
-
-        println(list)
-
         if (request.cookies == null) {
             return "redirect:/login"
         }
@@ -54,7 +51,6 @@ class HomeController {
                 ?: return "redirect:/login"
 
         model.addAttribute("sessionData", sessionData)
-
 
         val stringBuilder = StringBuilder()
         val path = "/home/mii/server/files/${sessionData.id}/"
@@ -65,19 +61,13 @@ class HomeController {
 
         model.addAttribute("files", stringBuilder.toString())
 
-        println("sessionID : ${sessionData?.id}")
-
-        return if (sessionData?.id != "") {
+        return if (sessionData.id != "") {
+            println("ACCESS: ${sessionData.id}")
             "home"
         } else {
             "redirect:/login"
         }
     }
-
-
-
-
-
 
     fun calcFileSize(size: Long): String {
 

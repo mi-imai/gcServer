@@ -1,4 +1,4 @@
-package jp.mydns.mii.gcFileServer
+package codes.mii.gcFileServer
 
 import javax.servlet.http.HttpServletRequest
 

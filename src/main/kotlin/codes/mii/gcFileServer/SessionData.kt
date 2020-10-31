@@ -1,4 +1,4 @@
-package jp.mydns.mii.gcFileServer
+package codes.mii.gcFileServer
 
 import org.springframework.context.annotation.Scope
 import org.springframework.context.annotation.ScopedProxyMode

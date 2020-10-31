@@ -1,4 +1,4 @@
-package jp.mydns.mii.gcFileServer
+package codes.mii.gcFileServer
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.jdbc.core.JdbcTemplate
@@ -23,16 +23,5 @@ class UserFormController {
     @GetMapping("/register")
     fun register(model: Model, request: HttpServletRequest): String {
         return "register"
-    }
-
-    @GetMapping("/registerCheck/{id}")
-    fun checkRegister(model: Model, request: HttpServletRequest, response: HttpServletResponse, @PathVariable("id") id: String): String {
-        val checkList = jdbcTemplate?.queryForList("SELECT * FROM registerCheck WHERE id = ?",id)
-
-        if (checkList?.get(0)?.get("id") as String == id) {
-
-        }
-
-        return "login"
     }
 }

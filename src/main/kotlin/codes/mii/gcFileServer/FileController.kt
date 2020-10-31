@@ -1,4 +1,4 @@
-package jp.mydns.mii.gcFileServer
+package codes.mii.gcFileServer
 
 import org.apache.tomcat.util.http.fileupload.IOUtils
 import org.springframework.beans.factory.annotation.Autowired
@@ -60,12 +60,13 @@ class FileController {
             println(it["path"] as String)
             val file = File(it["path"] as String)
             if (file.exists()) {
+                val filename = (it["name"] as String).replace("<", "\\<").replace(">", "\\>")
                 stringBuilder.append("<li class=\"list-group-item\">" +
                         "<div class=\"fileObject file\">" +
-                        "<i class=\"fileIcon fas fa-file\"></i><span class=\"fileName\">${(it["name"] as String).replace("<", "\\<").replace(">", "\\>")}</span>" +
+                        "<i class=\"fileIcon fas fa-file\"></i><span class=\"fileName\">${filename}</span>" +
                         "</div>" +
                         "<button type=\"button\" class=\"btn btn-raised btn-info\" onclick=\"location.href='/file/download/${it["id"] as String}'\"><i class=\"fas fa-download\"></i></button>" +
-                        "<button type=\"button\" class=\"btn btn-raised btn-danger\" onclick=\"deleteFile('${it["id"] as String}')\"><i class=\"fas fa-trash-alt\"></i></button>" +
+                        "<button type=\"button\" class=\"btn btn-raised btn-danger\" onclick=\"deleteFile('${it["id"] as String}', '${filename.replace("'", "\\'")}')\"><i class=\"fas fa-trash-alt\"></i></button>" +
                         "</li>")
                 fileSize += it["file_size"] as BigInteger
             } else {
@@ -136,50 +137,6 @@ class FileController {
 
     }
 
-
-    /*
-    @RequestMapping("/download/{id}", method = [RequestMethod.GET])
-    fun downloadFile(@PathVariable("id") id: String, request: HttpServletRequest): ResponseEntity<Resource> {
-        val sessionData = Data().getSession(request.remoteAddr)
-        if (sessionData?.id != "") {
-            val files = jdbcTemplate?.queryForList("SELECT * FROM files WHERE id = ? LIMIT 1;", id)
-            if (files?.size != 0) {
-                if (files?.get(0)?.get("user_name") == sessionData?.id) {
-                    val path = files?.get(0)?.get("path") as String
-                    val file = File(path)
-                    val header = HttpHeaders()
-                    header.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=${files[0]["name"]}")
-                    header.add("Cache-Control", "no-cache, no-store, must-revalidate")
-                    header.add("Pragma", "no-cache")
-                    header.add("Expires", "0")
-
-
-                    val resource = ByteArrayResource(Files.readAllBytes(Paths.get(path)))
-
-
-                    var contentType: String? = null
-                    try {
-                        contentType = request.servletContext.getMimeType(resource.file.absolutePath)
-                    } catch (ex: IOException) {
-                        println("Could not determine file type.")
-                    }
-
-                    if (contentType == null) {
-                        contentType = "application/octet-stream"
-                    }
-
-                    return ResponseEntity.ok()
-                            .contentType(MediaType.parseMediaType(contentType))
-                            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"${files[0]["name"]}\"")
-                            .body(resource)
-                }
-            }
-        }
-        return ResponseEntity.ok().build()
-    }
-
-     */
-
     @RequestMapping("/delete/{id}", method = [RequestMethod.GET])
     fun deleteFile(@PathVariable("id") id: String, request: HttpServletRequest, response: HttpServletResponse) {
         val sessionData = Data().getSession(request.remoteAddr, request.cookies.first { it.name == "JSESSIONID" }.value)
@@ -209,13 +166,6 @@ class FileController {
 
         try {
             Files.copy(file.inputStream, Paths.get(basePath).resolve(uuid))
-            /*
-            Files.newOutputStream(Paths.get(uploadFile), StandardOpenOption.CREATE).use { os ->
-                val bytes = file.bytes
-
-                os.write(bytes)
-            }
-             */
             jdbcTemplate?.update("INSERT INTO files VALUES (?, ?, ?, ?, NOW(), ?);", sessionData.id, file.originalFilename?.replace("<", "")?.replace(">", ""), uuid, uploadFile, file.size)
 
         } catch (e: IOException) {

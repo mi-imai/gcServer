@@ -1,4 +1,4 @@
-package jp.mydns.mii.gcFileServer.encrypt
+package codes.mii.gcFileServer.encrypt
 
 import java.security.MessageDigest
 

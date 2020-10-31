@@ -1,7 +1,7 @@
-package jp.mydns.mii.gcFileServer
+package codes.mii.gcFileServer
 
 import com.fasterxml.jackson.annotation.JsonCreator
-import jp.mydns.mii.gcFileServer.encrypt.Digest
+import codes.mii.gcFileServer.encrypt.Digest
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.mail.MailSender
@@ -42,6 +42,7 @@ class UserController {
         val sessionData = Data().getSession(request.remoteAddr, request.cookies.first { it.name == "JSESSIONID" }.value)
         sessionData?.id = user?.get(0)?.get("id") as String
 
+        println("LOGIN: ${sessionData?.id}")
         response.sendRedirect("/")
     }
 
@@ -65,25 +66,13 @@ class UserController {
         if (!emailPattern.containsMatchIn(email!!)) { response.sendRedirect("/register"); return }
 
         val uuid = UUID.randomUUID().toString()
-        /*
-        jdbc?.update("INSERT INTO registerCheck VALUES (?, ?, NOW(), ?, ?)", email, uuid, encryptedPassword, name)
-        val msg = SimpleMailMessage()
-        msg.setFrom("mi.imai8080@gmail.com")
-        msg.setTo(email)
-        msg.setSubject("アカウント登録の確認")
-        msg.setText("gcServerのアカウント登録を完了するには、下記のリンクを開いてください。心当たりのない場合はこのメールを無視してください。\nhttps://mii.mydns.jp/registerCheck/${uuid}")
-
-        mailSender?.send(msg)
-        */
-
-
 
         jdbc?.update("INSERT INTO users VALUES (?, ?, ?, ?, NOW(), NOW());", uuid, name, email, encryptedPassword)
 
         val sessionData = Data().getSession(request.remoteAddr, request.cookies.first { it.name == "JSESSIONID" }.value)
         sessionData?.id = uuid
 
+        println("REGISTER: ${sessionData?.id}")
         response.sendRedirect("/")
-
     }
 }

@@ -11,6 +11,7 @@ function reloadFiles() {
             files.append(request.responseText);
         }else{
             alert("エラーが発生しました。");
+            showNotification('top', 'right', 'danger', 'Failed to get files.')
         }
     };
     // Ajaxが異常終了した場合
@@ -35,36 +36,45 @@ function showNotification(from, align, type, text){
     });
 }
 
-function deleteFile(fileName) {
+function deleteFile(fileId, fileName) {
+    bootbox.confirm("ファイルを削除してもよろしいですか？<br>ファイル名: " + fileName, function (result) {
+        if (result) {
+            var uploadURL ="/file/delete/" + fileId;
+            $.ajax({
+                url: uploadURL,
+                type: "GET",
+                contentType:false,
+                processData: false,
+                cache: false,
+                timeout: 30000,
+                beforeSend: function(xhr, settings) {
 
-    var uploadURL ="/file/delete/" + fileName;
-    $.ajax({
-        url: uploadURL,
-        type: "GET",
-        contentType:false,
-        processData: false,
-        cache: false,
-        timeout: 30000,
-        beforeSend: function(xhr, settings) {
-
-        },
-        complete: function(xhr, textStatus) {
-            //通信完了
-        },
-        success: function(result, textStatus, xhr) {
-            //ajax通信が成功した
-            reloadFiles()
-            showNotification('top', 'right', 'danger', 'Deleted.')
-        },
-        error: function(xhr, textStatus, error) {
-            //ajax通信が失敗した
-            $('#status1').append('削除に失敗しました<br>');
+                },
+                complete: function(xhr, textStatus) {
+                    //通信完了
+                },
+                success: function(result, textStatus, xhr) {
+                    //ajax通信が成功した
+                    reloadFiles()
+                    showNotification('top', 'right', 'danger', 'Deleted.')
+                },
+                error: function(xhr, textStatus, error) {
+                    //ajax通信が失敗した
+                    $('#status1').append('削除に失敗しました<br>');
+                }
+            });
         }
     });
 }
 
 function upload() {
-    sendFileToServer(new FormData($("#upload-form").get(0)));
+    var files  = document.getElementById('upload-input').files
+
+    var fd = new FormData();
+    for (var i = 0; i < files.length; i++){
+        fd.append('files', files[i]);
+    }
+    sendFileToServer(fd);
 }
 
 function sendFileToServer(formData){
@@ -77,13 +87,26 @@ function sendFileToServer(formData){
         cache: false,
         data: formData,
         timeout: 30000,
+        async: true,
+        xhr : function(){
+            var XHR = $.ajaxSettings.xhr();
+            if(XHR.upload){
+                XHR.upload.addEventListener('progress',function(e){
+                    document.getElementById("progress-bar").style.width = `${e.loaded/e.total*100}%`;
+                }, false);
+            }
+            return XHR;
+        },
         beforeSend: function(xhr, settings) {
             //送信前の処理
             //$("#status1").clear()
+            showNotification('top', 'right','info', 'Uploading...')
+            document.getElementById("progress").style.visibility = "visible";
             $("#status1").append("Uploading..<br>");
         },
         complete: function(xhr, textStatus) {
             //通信完了
+            document.getElementById("progress").style.visibility = "hidden";
         },
         success: function(result, textStatus, xhr) {
             //ajax通信が成功した
@@ -92,9 +115,12 @@ function sendFileToServer(formData){
             status.empty();
             status.append("Uploaded<br>")
             showNotification('top', 'right', 'success', 'Uploaded.')
+            document.getElementById("progress-bar").style.width = 0;
         },
         error: function(xhr, textStatus, error) {
             //ajax通信が失敗した
+            showNotification('top', 'right', 'danger', 'Failed to upload file.')
+            document.getElementById("progress-bar").style.width = 0;
             $('#status1').append('送信に失敗しました<br>');
         }
     });
@@ -103,6 +129,7 @@ function sendFileToServer(formData){
 $(function() {
 
     reloadFiles()
+    document.getElementById("progress").style.visibility = "hidden";
 
     function handleFileUpload(files,obj){
         var fd = new FormData();

@@ -1,4 +1,4 @@
-package jp.mydns.mii.gcFileServer
+package codes.mii.gcFileServer
 
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.CookieValue
